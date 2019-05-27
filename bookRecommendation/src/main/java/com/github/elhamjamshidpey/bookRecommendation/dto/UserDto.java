@@ -8,9 +8,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
 
-/**
- * User
- */
+/*
+@uthor by Elham
+May 27, 2019
+*/
+
 @Validated
 public class UserDto   {
   @JsonProperty("username")
