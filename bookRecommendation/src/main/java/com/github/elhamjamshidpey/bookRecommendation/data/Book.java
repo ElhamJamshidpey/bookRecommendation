@@ -57,5 +57,15 @@ public class Book {
 	public String toString() {
 		return "Book [ASIN=" + ASIN + ", title=" + title + ", author=" + author + ", genre=" + genre + "]";
 	}
+
+	@Override
+	public int hashCode() {
+		return ASIN.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return ASIN.equals(((Book)obj).ASIN);
+	}
 	
 }

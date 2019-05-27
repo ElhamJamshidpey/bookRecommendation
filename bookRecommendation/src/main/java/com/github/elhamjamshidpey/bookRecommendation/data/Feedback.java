@@ -60,5 +60,17 @@ public class Feedback {
 	public void setLikeStatus(LikeStatus likeStatus) {
 		this.likeStatus = likeStatus;
 	}
+
+	@Override
+	public int hashCode() {
+		return user.getUsername().hashCode()+book.getASIN().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return user.getUsername().equals(((Feedback)obj).getUser().getUsername()) &&
+				book.getASIN().equals(((Feedback)obj).getBook().getASIN());
+	}
+	
 	
 }
