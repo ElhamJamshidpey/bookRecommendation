@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import com.github.elhamjamshidpey.bookRecommendation.data.Feedback;
 import com.github.elhamjamshidpey.bookRecommendation.data.User;
 import com.github.elhamjamshidpey.bookRecommendation.repository.FeedbackRepository;
-import com.github.elhamjamshidpey.bookRecommendation.repository.UserRepository;
 
 /*
 @uthor by Elham
@@ -21,8 +20,6 @@ public class FeedbackService {
 	
 	@Autowired 
 	private FeedbackRepository feedbackRepository;
-	@Autowired 
-	private UserRepository userRepository;
 	
 	public void save(List<Feedback> feedbacks) {
 		//feedbacks are updatable
