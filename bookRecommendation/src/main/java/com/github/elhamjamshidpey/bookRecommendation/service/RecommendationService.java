@@ -43,79 +43,54 @@ public class RecommendationService {
 	}
 
 	public List<Book> recommendBooksForUser(String username) {
-		User currentUser = userService.findByUsername(username);
-		
-		Optional<List<Feedback>> userFeedBacks = feedbackService.get(currentUser);
-		
+
 		Map<String, Integer> genresWeight = new HashMap<String, Integer>();
 		Map<String, Integer> authorsWeight = new HashMap<String, Integer>();
+		Map<Book, Integer> booksWeights = new HashMap<Book, Integer>();
+		List<Book> recommendedBooks = new ArrayList<Book>();
 		
-		userFeedBacks.ifPresent(feedbacks -> feedbacks.forEach(feedBack -> {
-			
-			String genre = feedBack.getBook().getGenre();
-			if (!genresWeight.isEmpty() && genresWeight.get(genre) != null) {
-				if (feedBack.getLikeStatus().equals(LikeStatus.LIKE))
-					genresWeight.put(genre, genresWeight.get(genre) + 2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.DISLIKE))
-					genresWeight.put(genre, genresWeight.get(genre) - 2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.NOT_INTERESTED))
-					genresWeight.put(genre, genresWeight.get(genre) - 1);
-			} else {
-				if (feedBack.getLikeStatus().equals(LikeStatus.LIKE))
-					genresWeight.put(genre, 2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.DISLIKE))
-					genresWeight.put(genre, -2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.NOT_INTERESTED))
-					genresWeight.put(genre, -1);
-			}
-			
-			String author = feedBack.getBook().getAuthor();
-			if (!authorsWeight.isEmpty() && authorsWeight.get(author) != null) {
-				if (feedBack.getLikeStatus().equals(LikeStatus.LIKE))
-					authorsWeight.put(author, authorsWeight.get(author) + 2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.DISLIKE))
-					authorsWeight.put(author, authorsWeight.get(author) - 2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.NOT_INTERESTED))
-					authorsWeight.put(author, authorsWeight.get(author) - 1);
-			} else {
-				if (feedBack.getLikeStatus().equals(LikeStatus.LIKE))
-					authorsWeight.put(author, +2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.DISLIKE))
-					authorsWeight.put(author, -2);
-				if (feedBack.getLikeStatus().equals(LikeStatus.NOT_INTERESTED))
-					authorsWeight.put(author, -1);
-			}
-		}));
-
+		User currentUser = userService.findByUsername(username);
+		Optional<List<Feedback>> userFeedBacks = feedbackService.get(currentUser);
 		List<Book> books = bookRepository.findAll();
 
-		// remove books which have user feedback
-		userFeedBacks.ifPresent(f -> f.forEach(feedBack -> {
-			Book feedbakedBook = feedBack.getBook();
-			books.remove(feedbakedBook);
-
-		}));
-
-		//Generate recommendation books
-		List<Book> recommendedBooks = new ArrayList<Book>();
-		Map<Book, Integer> booksWeights = new HashMap<Book, Integer>();
-
+		
 		if(userFeedBacks.isPresent()) {
+			//initialize genres and authors weight
+			books.forEach(book ->{
+				genresWeight.put(book.getGenre(), 0);
+				authorsWeight.put(book.getAuthor(), 0);
+			});
+		
+			userFeedBacks.ifPresent(feedbacks -> feedbacks.forEach(feedback ->{
+				//fill genre-weight and author-weight map based on user feedback
+				genresWeight.put(feedback.getBook().getGenre(), genresWeight.get(feedback.getBook().getGenre())
+					+feedback.getLikeStatus().getValue());
+				authorsWeight.put(feedback.getBook().getAuthor(), authorsWeight.get(feedback.getBook().getAuthor())
+					+feedback.getLikeStatus().getValue());
+			
+			}));
+		
+			//remove books which have user feedback
+			userFeedBacks.ifPresent(f -> f.forEach(feedBack -> {
+				books.remove(feedBack.getBook());
+			}));
+
+			//Generate recommendation books
 			books.forEach(book -> {
-				Integer bookGenreWeight = Optional.ofNullable(genresWeight) != null ? 0 :genresWeight.get(book.getGenre());
-				Integer bookAuthorWeight = Optional.ofNullable(authorsWeight) != null ? 0 :authorsWeight.get(book.getAuthor());
+				Integer bookGenreWeight = genresWeight.get(book.getGenre());
+				Integer bookAuthorWeight = authorsWeight.get(book.getAuthor());
 				Integer bookWeight = bookGenreWeight + bookAuthorWeight;
 				booksWeights.put(book, bookWeight);
 			});
 			booksWeights.entrySet().stream().sorted(Map.Entry.<Book, Integer>comparingByValue()).limit(RESULT_SIZE)
 					.forEach(item -> recommendedBooks.add((Book) item.getKey()));
 			
-		}else {
-			 books.stream().limit(RESULT_SIZE).forEach(b -> recommendedBooks.add(b));
-		}
+			}else {
+				books.stream().limit(RESULT_SIZE).forEach(b -> recommendedBooks.add(b));
+			}
 
-		return recommendedBooks;
-	}
+			return recommendedBooks;
+		}
 
 }
 
